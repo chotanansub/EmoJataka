@@ -12,9 +12,9 @@ streamlit run app/app.py
 
 ### Option 2: With Mockup Data
 
-1. Set environment variable:
+1. Set environment variable (optional, defaults to adaptive fallback):
 ```bash
-export USE_MOCKUP=true
+export DATA_MODE=mockup  # or DATA_MODE=adaptive for automatic fallback
 ```
 
 2. Run the app:
@@ -24,7 +24,7 @@ streamlit run app/app.py
 
 ## Expected Data Files
 
-The app expects CSV files in `data/` (or `data/mockup/` if `USE_MOCKUP=true`):
+The app expects CSV files in `data/` (or `data/mockup/` when `DATA_MODE=mockup` or when `DATA_MODE=adaptive` falls back):
 
 ### Required Core Files:
 - `jataka_stories.csv` - Story text and metadata (columns: chapter, title, text)
@@ -63,7 +63,7 @@ streamlit run app/app.py
 ### Missing Data Files
 The app will show informative messages if data files are missing. You can:
 1. Generate mockup data (if generators are available)
-2. Set `USE_MOCKUP=true` to use mockup data
+2. Set `DATA_MODE=mockup` (or `DATA_MODE=adaptive`) to use mockup data
 3. Add your real data files to the `data/` directory
 
 ### Page Not Showing

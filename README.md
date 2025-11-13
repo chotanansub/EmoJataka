@@ -39,7 +39,7 @@ pip install -r requirements.txt
 3. Set up environment (optional):
 ```bash
 cp .env.example .env
-# Edit .env to set USE_MOCKUP=true if using mockup data
+# Edit .env to set DATA_MODE=mockup (or adaptive/real) as needed
 ```
 
 ## Running the App
@@ -68,8 +68,8 @@ python utils/mockup_generator/generate_all.py
 
 2. Set environment variable:
 ```bash
-export USE_MOCKUP=true
-# or add USE_MOCKUP=true to .env file
+export DATA_MODE=mockup  # or set to adaptive for automatic fallback
+# legacy: export USE_MOCKUP=true
 ```
 
 3. Run the app:
@@ -119,7 +119,11 @@ The app expects the following CSV files in the `data/` directory:
 
 The app uses environment variables for configuration:
 
-- `USE_MOCKUP`: Set to `true` to use mockup data from `data/mockup/` directory
+- `DATA_MODE`: Controls where data is loaded from (defaults to `adaptive` when not set). Options:
+  - `real` (default): load only from `data/`
+  - `mockup`: load only from `data/mockup/`
+  - `adaptive`: prefer `data/` when the file exists, otherwise fall back to `data/mockup/`
+- `USE_MOCKUP`: Legacy flag (still supported). When `true`, behaves like `DATA_MODE=mockup`.
 
 ## Technologies Used
 
@@ -143,7 +147,7 @@ Add new visualization functions to `src/visualization/` modules.
 
 ### Data Loading
 
-Use functions from `src/utils/data_loader.py` to load data. The loader automatically handles mockup vs. real data based on the `USE_MOCKUP` configuration.
+Use functions from `src/utils/data_loader.py` to load data. The loader respects the `DATA_MODE` setting (with optional per-call overrides) and can automatically fall back to mockup data when `DATA_MODE=adaptive`.
 
 ## License
 

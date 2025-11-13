@@ -149,6 +149,10 @@ with tab1:
             st.info("📝 Word frequency by emotion data not found.")
         except Exception as e:
             st.warning(f"Could not load word frequency by emotion: {e}")
+    except FileNotFoundError:
+        st.info("📝 Word frequency data not found. Please generate the data files first.")
+    except Exception as e:
+        st.error(f"Error loading word frequencies: {e}")
 
 # Tab 2: Language Patterns
 with tab2:
