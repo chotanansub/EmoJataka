@@ -1,16 +1,45 @@
 """Data loading utilities for CSV files."""
 
 import pandas as pd
-from pathlib import Path
 from typing import Optional, Dict, Any
-from .config import get_data_path, EMOTIONS
+from .config import (
+    get_data_path,
+    EMOTIONS,
+    DATA_MODE,
+)
 
-def load_csv(filename: str, **kwargs) -> pd.DataFrame:
-    """Load a CSV file from the data directory (or mockup if USE_MOCKUP is True)."""
-    filepath = get_data_path(filename)
-    if not filepath.exists():
-        raise FileNotFoundError(f"Data file not found: {filepath}")
-    return pd.read_csv(filepath, **kwargs)
+
+def _resolve_mode(mode: Optional[str] = None) -> str:
+    if mode:
+        return mode.lower()
+    return (DATA_MODE or "real").lower()
+
+
+def load_csv(filename: str, mode: Optional[str] = None, **kwargs) -> pd.DataFrame:
+    """
+    Load a CSV file using the configured data mode.
+
+    Args:
+        filename: Name of the CSV file to load.
+        mode: Optional override for the data mode ("real", "mockup", "adaptive").
+        **kwargs: Additional arguments passed to ``pandas.read_csv``.
+    """
+    resolved_mode = _resolve_mode(mode)
+    filepath = get_data_path(filename, mode=resolved_mode)
+
+    if filepath.exists():
+        return pd.read_csv(filepath, **kwargs)
+
+    if resolved_mode == "adaptive":
+        real_path = get_data_path(filename, mode="real")
+        mockup_path = get_data_path(filename, mode="mockup")
+        raise FileNotFoundError(
+            f"Data file '{filename}' not found.\n"
+            f"- Expected real data path: {real_path}\n"
+            f"- Expected mockup data path: {mockup_path}"
+        )
+
+    raise FileNotFoundError(f"Data file not found: {filepath}")
 
 def load_stories() -> pd.DataFrame:
     """Load the jataka stories dataset."""
