@@ -149,10 +149,6 @@ Add new visualization functions to `src/visualization/` modules.
 
 Use functions from `src/utils/data_loader.py` to load data. The loader respects the `DATA_MODE` setting (with optional per-call overrides) and can automatically fall back to mockup data when `DATA_MODE=adaptive`.
 
-## License
-
-[Add your license here]
-
 ## Acknowledgments
 
 - NRC Emotion Lexicon for emotion detection
