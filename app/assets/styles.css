@@ -1,0 +1,56 @@
+/* Custom styles for Jataka Emotion Analysis App */
+
+/* Main container */
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Headers */
+h1 {
+    color: #1f77b4;
+}
+
+h2 {
+    color: #2c9f2c;
+}
+
+h3 {
+    color: #ff7f0e;
+}
+
+/* Metrics */
+[data-testid="stMetric"] {
+    background-color: #f0f2f6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #1f77b4;
+}
+
+/* Info boxes */
+.stAlert {
+    border-radius: 0.5rem;
+}
+
+/* Expanders */
+[data-testid="stExpander"] {
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #f8f9fa;
+}
+
+/* Buttons */
+.stButton > button {
+    border-radius: 0.5rem;
+    border: 1px solid #1f77b4;
+}
+
+.stButton > button:hover {
+    background-color: #1f77b4;
+    color: white;
+}
+
