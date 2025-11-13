@@ -1,4 +1,4 @@
-/* Custom styles for Jataka Emotion Analysis App */
+/* Custom styles for Jataka Emotion Analysis App - Buddhist Orange/Brown Theme */
 
 /* Main container */
 .main .block-container {
@@ -8,49 +8,132 @@
 
 /* Headers */
 h1 {
-    color: #1f77b4;
+    color: #D84315;
+    font-weight: 700;
 }
 
 h2 {
-    color: #2c9f2c;
+    color: #FF6B35;
+    font-weight: 600;
 }
 
 h3 {
-    color: #ff7f0e;
+    color: #F4511E;
+    font-weight: 500;
 }
 
 /* Metrics */
 [data-testid="stMetric"] {
-    background-color: #f0f2f6;
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
     padding: 1rem;
-    border-radius: 0.5rem;
-    border-left: 4px solid #1f77b4;
+    border-radius: 0.75rem;
+    border-left: 4px solid #FF6B35;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
 }
 
 /* Info boxes */
 .stAlert {
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
+    border-left: 4px solid #FF6B35;
 }
 
 /* Expanders */
 [data-testid="stExpander"] {
-    border: 1px solid #e0e0e0;
-    border-radius: 0.5rem;
+    border: 1px solid #FFCCBC;
+    border-radius: 0.75rem;
+    background-color: #FFF8F5;
 }
 
 /* Sidebar */
 [data-testid="stSidebar"] {
-    background-color: #f8f9fa;
+    background: linear-gradient(180deg, #FFF8F5 0%, #FFEBEE 100%);
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 2rem;
+}
+
+/* Radio buttons in sidebar */
+[data-testid="stSidebar"] .stRadio > label {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+[data-testid="stSidebar"] .stRadio > label:hover {
+    background-color: rgba(255, 107, 53, 0.1);
 }
 
 /* Buttons */
 .stButton > button {
-    border-radius: 0.5rem;
-    border: 1px solid #1f77b4;
+    border-radius: 0.75rem;
+    border: 2px solid #FF6B35;
+    background-color: white;
+    color: #FF6B35;
+    font-weight: 500;
+    transition: all 0.3s;
 }
 
 .stButton > button:hover {
-    background-color: #1f77b4;
+    background: linear-gradient(135deg, #FF6B35 0%, #D84315 100%);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0.5rem;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #FFF3E0;
+    transition: all 0.2s;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background-color: #FFE0B2;
+}
+
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #FF6B35 0%, #D84315 100%);
     color: white;
 }
 
+/* Selectbox */
+.stSelectbox > div > div {
+    border-radius: 0.5rem;
+    border-color: #FF6B35;
+}
+
+/* Text input */
+.stTextInput > div > div > input {
+    border-radius: 0.5rem;
+    border-color: #FF6B35;
+}
+
+/* Dataframe */
+[data-testid="stDataFrame"] {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Plotly charts */
+.js-plotly-plot {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}

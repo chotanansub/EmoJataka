@@ -1,7 +1,15 @@
-"""Main Streamlit app for Jataka Tales Emotion Analysis."""
+"""Main Streamlit app - Component Loader and Router."""
 
 import streamlit as st
 from pathlib import Path
+import sys
+import importlib.util
+
+# Add src to path
+project_root = Path(__file__).parent.parent
+src_path = project_root / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 # Page configuration
 st.set_page_config(
@@ -17,63 +25,54 @@ if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# Main title
-st.title("📚 Jataka Tales Emotion Analysis")
-st.markdown("---")
+# Import components
+sys.path.insert(0, str(Path(__file__).parent / "components"))
+from sidebar import render_sidebar
 
-# Welcome message
-st.markdown("""
-Welcome to the **Jataka Tales Emotion Analysis** dashboard!
+# Import pages module
+sys.path.insert(0, str(Path(__file__).parent))
 
-This interactive application allows you to explore emotions in 300 Jataka tales (Buddhist stories) 
-using the NRC Emotion Lexicon. Navigate through the pages using the sidebar to discover:
-
-- **Overview**: Dataset statistics and overall emotion patterns
-- **Emotion Analysis**: Detailed emotion profiles at different levels
-- **Story Groups**: K-means clusters of similar stories
-- **Story Explorer**: Search and explore individual chapters
-- **Text Insights**: Word clouds, POS tags, and named entities
-
-Use the sidebar to navigate between pages.
-""")
-
-st.markdown("---")
-
-# Quick stats
-try:
-    import sys
-    project_root = Path(__file__).parent.parent
-    src_path = project_root / "src"
-    if str(src_path) not in sys.path:
-        sys.path.insert(0, str(src_path))
-    from utils.data_loader import get_dataset_stats
-    
-    stats = get_dataset_stats()
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Stories", stats['total_stories'])
-    
-    with col2:
-        st.metric("Total Chapters", stats['total_chapters'])
-    
-    with col3:
-        st.metric("Total Words", f"{stats['total_words']:,}")
-    
-    with col4:
-        st.metric("Language", stats['language'])
+def load_page(page_name):
+    """Dynamically load and execute a page module."""
+    try:
+        pages_dir = Path(__file__).parent / "pages"
+        page_file = pages_dir / f"{page_name}.py"
         
-except Exception as e:
-    st.info("📝 Please ensure data files are available. Use mockup data for testing.")
+        if not page_file.exists():
+            st.error(f"Page not found: {page_name}")
+            return
+        
+        # Load the module dynamically
+        spec = importlib.util.spec_from_file_location(page_name, page_file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
+        # Execute the render function if it exists
+        if hasattr(module, 'render'):
+            module.render()
+        # Otherwise, the page script has already executed
+        
+    except Exception as e:
+        st.error(f"Error loading page {page_name}: {e}")
+        import traceback
+        st.code(traceback.format_exc())
 
-st.markdown("---")
+# Render sidebar and get selected page
+selected_page = render_sidebar()
 
-# Instructions
-st.info("""
-💡 **Getting Started:**
-1. Use the sidebar to navigate to different pages
-2. If data files are not available, set `USE_MOCKUP=true` in your environment or `.env` file
-3. Generate mockup data using the utilities in the `utils/mockup_generator/` directory
-""")
+# Page routing - map sidebar selection to page files
+page_routes = {
+    "overview": "page_overview",
+    "emotion_analysis": "page_emotion_analysis",
+    "story_groups": "page_story_groups",
+    "story_explorer": "page_story_explorer",
+    "text_insights": "page_text_insights"
+}
 
+# Load the selected page
+if selected_page and selected_page in page_routes:
+    load_page(page_routes[selected_page])
+else:
+    # Default home page content (when no page is selected or overview is selected)
+    if not selected_page or selected_page == "overview":
+        load_page("page_overview")

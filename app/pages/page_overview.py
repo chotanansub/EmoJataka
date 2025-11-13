@@ -21,18 +21,18 @@ from metrics_cards import render_metrics_row
 
 st.set_page_config(
     page_title="Overview - Jataka Emotion Analysis",
-    page_icon="🏠",
+    page_icon="🪷",
     layout="wide"
 )
 
-st.title("🏠 Overview")
+st.title("🪷 Overview")
 st.markdown("---")
 
 # Project description
 st.header("📚 Project Description")
 st.markdown("""
 This project analyzes emotions in **300 Jataka tales** (Buddhist stories of Buddha's previous lives).
-The dataset contains **313 chapters** in 100% Thai language.
+The dataset contains **313 chapters** in Thai language.
 
 ### Core Analysis
 - **Emotion Analysis**: 8 basic emotions (trust, joy, anger, anticipation, fear, disgust, surprise, sadness)
