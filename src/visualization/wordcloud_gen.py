@@ -128,7 +128,7 @@ def generate_wordcloud(
         background_color=background_color,
         colormap='viridis',
         font_path=FONT_PATH_STRING,
-        regexp=r"[A-Za-z0-9\u0E00-\u0E7F']+",
+        regexp=r"[\u0E00-\u0E7F]+",
         collocations=False
     ).generate_from_frequencies(word_freq)
     
