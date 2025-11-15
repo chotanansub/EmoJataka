@@ -29,24 +29,24 @@ st.title("🪷 Overview")
 st.markdown("---")
 
 # Project description
-st.header("📚 Project Description")
+st.header("📚 About This Project")
 st.markdown("""
-This project analyzes emotions in **300 Jataka tales** (Buddhist stories of Buddha's previous lives).
-The dataset contains **313 chapters** in Thai language.
+This project analyzes emotions in **314 Jataka tales** (Buddhist stories of Buddha's previous lives)
+written in Thai language.
 
-### Core Analysis
+### 🎯 Core Analysis
 - **Emotion Analysis**: 8 basic emotions (trust, joy, anger, anticipation, fear, disgust, surprise, sadness)
-- **Analysis Levels**: 
+- **Analysis Levels**:
   - Overall (all stories combined)
   - Cluster-level (K-means grouped stories)
-  - Chapter-level (individual story analysis)
-- **Additional Analysis**: POS tagging, NER, word frequency, text statistics
+  - Story-level (individual story analysis)
+- **Text Analysis**: Word clouds, POS tagging, NER, and text statistics
 
-### Technical Approach
+### 🔧 Technical Approach
 - **Emotion Detection**: Lexicon-based matching with NRC Thai lexicon
-- **Clustering**: K-means on TF-IDF features
-- **NLP Tools**: PyThaiNLP for tokenization, POS tagging, NER
-- **Visualization**: Interactive Streamlit dashboard with star plots
+- **Clustering**: K-means on TF-IDF features for story grouping
+- **NLP Processing**: PyThaiNLP for tokenization, POS tagging, and NER
+- **Visualization**: Interactive dashboard with star plots, word clouds, and charts
 """)
 
 st.markdown("---")
@@ -56,17 +56,17 @@ st.header("📊 Dataset Quick Facts")
 
 try:
     stats = get_dataset_stats()
-    
+
     metrics = [
-        ("Total Stories", str(stats['total_stories']), "Number of unique Jataka stories"),
-        ("Total Chapters", str(stats['total_chapters']), "Total number of chapters analyzed"),
-        ("Total Words", f"{stats['total_words']:,}", "Total word count across all chapters"),
-        ("Avg Words/Chapter", f"{stats['avg_words_per_chapter']:,}", "Average words per chapter"),
-        ("Language", stats['language'], "Primary language of the dataset")
+        ("Total Stories", str(stats['total_stories']), "Number of Jataka tales in the dataset"),
+        ("Total Words", f"{stats['total_words']:,}", "Total word count across all stories"),
+        ("Avg Words/Story", f"{stats['avg_words_per_chapter']:,}", "Average words per story"),
+        ("Language", stats['language'], "Primary language of the dataset"),
+        ("Emotions", "8", "Basic emotions analyzed (NRC lexicon)")
     ]
-    
+
     render_metrics_row(metrics)
-    
+
 except Exception as e:
     st.error(f"Error loading dataset statistics: {e}")
     st.info("Using default values. Please ensure data files are available.")

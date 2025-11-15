@@ -148,24 +148,16 @@ def render_sidebar():
         stats = get_dataset_stats()
         
         st.sidebar.markdown(f"""
-            <div style='background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); 
-                        padding: 1.3rem; border-radius: 12px; color: white; 
+            <div style='background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+                        padding: 1.3rem; border-radius: 12px; color: white;
                         box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);'>
-                <div style='display: flex; justify-content: space-between; 
+                <div style='display: flex; justify-content: space-between;
                             align-items: center; margin-bottom: 0.7rem;
                             padding-bottom: 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.3);'>
                     <span style='font-size: 0.95rem; display: flex; align-items: center;'>
                         <span style='font-size: 1.3rem; margin-right: 0.6rem;'>📖</span> Stories
                     </span>
                     <strong style='font-size: 1.2rem;'>{stats['total_stories']}</strong>
-                </div>
-                <div style='display: flex; justify-content: space-between; 
-                            align-items: center; margin-bottom: 0.7rem;
-                            padding-bottom: 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.3);'>
-                    <span style='font-size: 0.95rem; display: flex; align-items: center;'>
-                        <span style='font-size: 1.3rem; margin-right: 0.6rem;'>📑</span> Chapters
-                    </span>
-                    <strong style='font-size: 1.2rem;'>{stats['total_chapters']}</strong>
                 </div>
                 <div style='display: flex; justify-content: space-between; align-items: center;'>
                     <span style='font-size: 0.95rem; display: flex; align-items: center;'>
@@ -177,13 +169,12 @@ def render_sidebar():
         """, unsafe_allow_html=True)
     except Exception:
         st.sidebar.markdown("""
-            <div style='background: linear-gradient(135deg, #FF8A65 0%, #FFAB91 100%); 
-                        padding: 1.3rem; border-radius: 12px; 
+            <div style='background: linear-gradient(135deg, #FF8A65 0%, #FFAB91 100%);
+                        padding: 1.3rem; border-radius: 12px;
                         box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);'>
-                <p style='margin: 0; font-size: 0.95rem; color: #3E2723; 
+                <p style='margin: 0; font-size: 0.95rem; color: #3E2723;
                           line-height: 2; font-weight: 500;'>
-                    📖 <strong>300</strong> Stories<br>
-                    📑 <strong>313</strong> Chapters<br>
+                    📖 <strong>314</strong> Stories<br>
                     🌏 <strong>Thai</strong> Language
                 </p>
             </div>
