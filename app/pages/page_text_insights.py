@@ -12,6 +12,7 @@ if str(src_path) not in sys.path:
 
 from utils.data_loader import (
     load_word_frequencies, load_word_freq_by_cluster, load_word_freq_by_emotion,
+    load_word_freq_by_pos, load_word_freq_by_ner,
     load_pos_distribution, load_pos_by_chapter, load_pos_by_cluster,
     load_ner_entities, load_ner_by_chapter, load_ner_counts,
     load_cluster_assignments
@@ -37,29 +38,100 @@ st.set_page_config(
 st.title("📊 Text Insights")
 st.markdown("---")
 
-# Helper function to display word cloud with zoom
+# Helper functions
+def get_filtered_words(word_freq_df, filter_type, cluster=None, emotion=None):
+    """
+    Filter word frequencies based on POS tag or NER entity type.
+
+    Args:
+        word_freq_df: DataFrame with word frequencies (can include cluster/emotion column)
+        filter_type: One of 'all', 'noun', 'verb', 'adjective', 'person', 'location'
+        cluster: Optional cluster number to filter by
+        emotion: Optional emotion to filter by
+
+    Returns:
+        Dictionary of {word: frequency}
+    """
+    # Handle cluster filtering for cluster-specific data
+    if cluster is not None and 'cluster' in word_freq_df.columns:
+        word_freq_df = word_freq_df[word_freq_df['cluster'] == cluster]
+
+    # Handle emotion filtering for emotion-specific data
+    if emotion is not None and 'emotion' in word_freq_df.columns:
+        word_freq_df = word_freq_df[word_freq_df['emotion'] == emotion]
+
+    if filter_type == "all":
+        # Return all words
+        word_col = 'word' if 'word' in word_freq_df.columns else word_freq_df.columns[0]
+        freq_col = 'frequency' if 'frequency' in word_freq_df.columns else word_freq_df.columns[1]
+        return dict(zip(word_freq_df[word_col], word_freq_df[freq_col]))
+
+    # For filtered types, we need to intersect specific words with POS/NER filtered words
+    if cluster is not None or emotion is not None:
+        # Get the word list from the filtered data
+        word_col = 'word' if 'word' in word_freq_df.columns else word_freq_df.columns[0]
+        specific_words = set(word_freq_df[word_col])
+
+    # POS-based filters
+    if filter_type in ["noun", "verb", "adjective"]:
+        try:
+            word_freq_pos = load_word_freq_by_pos()
+
+            # Map filter to POS tags
+            pos_tag_map = {
+                "noun": "NOUN",
+                "verb": "VERB",
+                "adjective": "ADJ"
+            }
+            pos_tag = pos_tag_map[filter_type]
+
+            # Filter by POS tag
+            filtered = word_freq_pos[word_freq_pos['pos_tag'] == pos_tag]
+
+            # If cluster/emotion is specified, intersect with those words
+            if cluster is not None or emotion is not None:
+                filtered = filtered[filtered['word'].isin(specific_words)]
+
+            return dict(zip(filtered['word'], filtered['frequency']))
+        except Exception as e:
+            st.warning(f"Could not load POS-filtered words: {e}")
+            return {}
+
+    # NER-based filters
+    if filter_type in ["person", "location"]:
+        try:
+            word_freq_ner = load_word_freq_by_ner()
+
+            # Map filter to entity types
+            entity_type_map = {
+                "person": "PERSON",
+                "location": "LOCATION"
+            }
+            entity_type = entity_type_map[filter_type]
+
+            # Filter by entity type
+            filtered = word_freq_ner[word_freq_ner['entity_type'] == entity_type]
+
+            # If cluster/emotion is specified, intersect with those words
+            if cluster is not None or emotion is not None:
+                filtered = filtered[filtered['word'].isin(specific_words)]
+
+            return dict(zip(filtered['word'], filtered['frequency']))
+        except Exception as e:
+            st.warning(f"Could not load NER-filtered words: {e}")
+            return {}
+
+    return {}
+
 def display_wordcloud_image(img_base64: str):
-    """Display word cloud image with zoom capability if available."""
-    if HAS_IMAGE_ZOOM:
-        # Convert base64 to PIL Image for streamlit_image_zoom
-        img_data = base64.b64decode(img_base64)
-        img = PILImage.open(BytesIO(img_data))
+    """Display word cloud image with native Streamlit for sharp viewing."""
+    # Display at small size by default (preview)
+    st.image(f"data:image/png;base64,{img_base64}", width=600, caption="Preview - Expand below to see full resolution")
 
-        # Calculate display size maintaining aspect ratio
-        # Original is 1600x1200 (4:3 ratio)
-        original_width, original_height = img.size
-        aspect_ratio = original_width / original_height
-
-        # Target height of 600, calculate width to maintain aspect ratio
-        display_height = 600
-        display_width = int(display_height * aspect_ratio)
-
-        # Display with zoom capability maintaining aspect ratio
-        image_zoom(img, mode="scroll", size=(display_width, display_height), keep_aspect_ratio=True, zoom_factor=4.0, increment=0.2)
-    else:
-        # Fallback to standard streamlit image display
+    # Provide expander with full-scale image
+    with st.expander("🔍 View Full Scale (3200x2400 @ 200 DPI)"):
         st.image(f"data:image/png;base64,{img_base64}", use_container_width=True)
-        st.info("💡 Install `streamlit-image-zoom` for interactive zoom: `pip install streamlit-image-zoom`")
+        st.caption("💡 Tip: Right-click and 'Open image in new tab' for pixel-perfect zoom in your browser")
 
 # Create tabs
 tab1, tab2, tab3 = st.tabs(["☁️ Word Clouds", "📝 Language Patterns", "🏷️ Named Entities"])
@@ -68,9 +140,25 @@ tab1, tab2, tab3 = st.tabs(["☁️ Word Clouds", "📝 Language Patterns", "�
 with tab1:
     st.header("☁️ Word Clouds")
 
-    # Theme configuration
-    col_config1, col_config2 = st.columns([3, 1])
-    with col_config2:
+    # Configuration row
+    col_filter, col_theme = st.columns([2, 1])
+
+    with col_filter:
+        filter_option = st.selectbox(
+            "🔍 Filter by",
+            options=["all", "noun", "verb", "adjective", "person", "location"],
+            format_func=lambda x: {
+                "all": "All Words",
+                "noun": "Nouns Only",
+                "verb": "Verbs Only",
+                "adjective": "Adjectives Only",
+                "person": "Person Names",
+                "location": "Location Names"
+            }[x],
+            key="wordcloud_filter"
+        )
+
+    with col_theme:
         theme_option = st.selectbox(
             "🎨 Theme",
             options=["dark", "light"],
@@ -84,22 +172,29 @@ with tab1:
         if not word_freq.empty:
             # Overall word cloud
             st.subheader("Overall Word Cloud")
-            
-            # Determine column names
-            word_col = 'word' if 'word' in word_freq.columns else word_freq.columns[0]
-            freq_col = 'frequency' if 'frequency' in word_freq.columns else word_freq.columns[1]
-            
-            if word_col in word_freq.columns and freq_col in word_freq.columns:
-                # Limit to top words
-                top_words = word_freq.nlargest(100, freq_col)
-                word_dict = dict(zip(top_words[word_col], top_words[freq_col]))
+
+            # Get filtered words based on selection
+            word_dict = get_filtered_words(word_freq, filter_option)
+
+            if word_dict:
+                # Limit to top 100 words
+                sorted_words = sorted(word_dict.items(), key=lambda x: x[1], reverse=True)[:100]
+                top_word_dict = dict(sorted_words)
 
                 # Generate word cloud with theme
                 from visualization.wordcloud_gen import generate_wordcloud
-                img_base64 = generate_wordcloud(word_dict, theme=theme_option, title="Overall Word Cloud")
+                filter_label = {
+                    "all": "Overall",
+                    "noun": "Nouns",
+                    "verb": "Verbs",
+                    "adjective": "Adjectives",
+                    "person": "Person Names",
+                    "location": "Locations"
+                }[filter_option]
+                img_base64 = generate_wordcloud(top_word_dict, theme=theme_option, title=f"{filter_label} Word Cloud")
                 display_wordcloud_image(img_base64)
             else:
-                st.warning("Word frequency data format not recognized.")
+                st.warning(f"No {filter_option} words available.")
         else:
             st.warning("Word frequencies data not available.")
         
@@ -107,11 +202,11 @@ with tab1:
         
         # Word cloud by cluster
         st.subheader("Word Cloud by Cluster")
-        
+
         try:
             word_freq_cluster = load_word_freq_by_cluster()
             cluster_assignments = load_cluster_assignments()
-            
+
             if not word_freq_cluster.empty and not cluster_assignments.empty:
                 available_clusters = sorted(cluster_assignments['cluster'].unique())
                 selected_cluster = st.selectbox(
@@ -120,26 +215,28 @@ with tab1:
                     format_func=lambda x: f"Cluster {x}",
                     key="cluster_wordcloud"
                 )
-                
-                cluster_words = word_freq_cluster[
-                    word_freq_cluster['cluster'] == selected_cluster
-                ]
-                
-                if not cluster_words.empty:
-                    word_col = 'word' if 'word' in cluster_words.columns else cluster_words.columns[0]
-                    freq_col = 'frequency' if 'frequency' in cluster_words.columns else cluster_words.columns[1]
-                    
-                    if word_col in cluster_words.columns and freq_col in cluster_words.columns:
-                        top_words = cluster_words.nlargest(100, freq_col)
-                        word_dict = dict(zip(top_words[word_col], top_words[freq_col]))
 
-                        from visualization.wordcloud_gen import generate_wordcloud
-                        img_base64 = generate_wordcloud(word_dict, theme=theme_option, title=f"Cluster {selected_cluster}")
-                        display_wordcloud_image(img_base64)
-                    else:
-                        st.warning("Word frequency data format not recognized.")
+                # Get filtered words for this cluster
+                word_dict = get_filtered_words(word_freq_cluster, filter_option, cluster=selected_cluster)
+
+                if word_dict:
+                    # Limit to top 100 words
+                    sorted_words = sorted(word_dict.items(), key=lambda x: x[1], reverse=True)[:100]
+                    top_word_dict = dict(sorted_words)
+
+                    from visualization.wordcloud_gen import generate_wordcloud
+                    filter_label = {
+                        "all": "",
+                        "noun": "Nouns - ",
+                        "verb": "Verbs - ",
+                        "adjective": "Adjectives - ",
+                        "person": "Person Names - ",
+                        "location": "Locations - "
+                    }[filter_option]
+                    img_base64 = generate_wordcloud(top_word_dict, theme=theme_option, title=f"{filter_label}Cluster {selected_cluster}")
+                    display_wordcloud_image(img_base64)
                 else:
-                    st.info(f"No word frequency data for cluster {selected_cluster}.")
+                    st.info(f"No {filter_option} words for cluster {selected_cluster}.")
             else:
                 st.info("Word frequency by cluster data not available.")
         except FileNotFoundError:
@@ -151,14 +248,14 @@ with tab1:
         
         # Word cloud by emotion
         st.subheader("Word Cloud by Emotion")
-        
+
         try:
             word_freq_emotion = load_word_freq_by_emotion()
-            
+
             if not word_freq_emotion.empty:
                 emotions = ['trust', 'joy', 'anger', 'anticipation', 'fear', 'disgust', 'surprise', 'sadness']
                 available_emotions = [e for e in emotions if e in word_freq_emotion.get('emotion', pd.Series()).values]
-                
+
                 if available_emotions:
                     selected_emotion = st.selectbox(
                         "Select Emotion",
@@ -166,26 +263,28 @@ with tab1:
                         format_func=lambda x: x.title(),
                         key="emotion_wordcloud"
                     )
-                    
-                    emotion_words = word_freq_emotion[
-                        word_freq_emotion['emotion'] == selected_emotion
-                    ]
-                    
-                    if not emotion_words.empty:
-                        word_col = 'word' if 'word' in emotion_words.columns else emotion_words.columns[0]
-                        freq_col = 'frequency' if 'frequency' in emotion_words.columns else emotion_words.columns[1]
-                        
-                        if word_col in emotion_words.columns and freq_col in emotion_words.columns:
-                            top_words = emotion_words.nlargest(100, freq_col)
-                            word_dict = dict(zip(top_words[word_col], top_words[freq_col]))
 
-                            from visualization.wordcloud_gen import generate_wordcloud
-                            img_base64 = generate_wordcloud(word_dict, theme=theme_option, title=f"{selected_emotion.title()} Emotion")
-                            display_wordcloud_image(img_base64)
-                        else:
-                            st.warning("Word frequency data format not recognized.")
+                    # Get filtered words for this emotion
+                    word_dict = get_filtered_words(word_freq_emotion, filter_option, emotion=selected_emotion)
+
+                    if word_dict:
+                        # Limit to top 100 words
+                        sorted_words = sorted(word_dict.items(), key=lambda x: x[1], reverse=True)[:100]
+                        top_word_dict = dict(sorted_words)
+
+                        from visualization.wordcloud_gen import generate_wordcloud
+                        filter_label = {
+                            "all": "",
+                            "noun": "Nouns - ",
+                            "verb": "Verbs - ",
+                            "adjective": "Adjectives - ",
+                            "person": "Person Names - ",
+                            "location": "Locations - "
+                        }[filter_option]
+                        img_base64 = generate_wordcloud(top_word_dict, theme=theme_option, title=f"{filter_label}{selected_emotion.title()} Emotion")
+                        display_wordcloud_image(img_base64)
                     else:
-                        st.info(f"No word frequency data for emotion {selected_emotion}.")
+                        st.info(f"No {filter_option} words for emotion {selected_emotion}.")
                 else:
                     st.info("No emotion data available in word frequencies.")
             else:

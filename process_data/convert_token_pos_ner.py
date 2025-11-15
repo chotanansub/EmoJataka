@@ -5,7 +5,7 @@ This script processes the token_pos_ner.json file which contains:
 - Key: Story title (string)
 - Value: List of [token, POS_tag, NER_tag]
 
-Outputs 8 CSV files to data/ directory:
+Outputs 10 CSV files to data/ directory:
 1. ner_entities.csv - Individual named entities with counts
 2. ner_by_chapter.csv - Entity type counts per chapter
 3. ner_counts.csv - Overall entity type statistics
@@ -14,6 +14,8 @@ Outputs 8 CSV files to data/ directory:
 6. word_frequencies.csv - Overall word frequencies
 7. word_freq_by_cluster.csv - Word frequencies per cluster
 8. word_freq_by_emotion.csv - Word frequencies per emotion
+9. word_freq_by_pos.csv - Word frequencies per POS tag
+10. word_freq_by_ner.csv - Word frequencies per NER entity type
 """
 
 import json
@@ -330,6 +332,64 @@ class TokenPosNerConverter:
         df.to_csv(self.output_dir / 'word_freq_by_emotion.csv', index=False)
         print(f"✓ Generated word_freq_by_emotion.csv ({len(df)} rows)")
 
+    def generate_word_freq_by_pos(self):
+        """Generate word_freq_by_pos.csv: pos_tag, word, frequency, rank"""
+        # Collect tokens by POS tag
+        pos_tokens = defaultdict(list)
+
+        for title, tokens in self.data.items():
+            for token, pos_tag, ner_tag in tokens:
+                # Keep only Thai characters
+                if re.match(r'^[\u0E00-\u0E7F]+$', token):
+                    pos_tokens[pos_tag].append(token)
+
+        # Count frequencies per POS tag
+        data_rows = []
+        for pos_tag in sorted(pos_tokens.keys()):
+            token_counts = Counter(pos_tokens[pos_tag])
+
+            for rank, (word, frequency) in enumerate(token_counts.most_common(), 1):
+                data_rows.append({
+                    'pos_tag': pos_tag,
+                    'word': word,
+                    'frequency': frequency,
+                    'rank': rank
+                })
+
+        df = pd.DataFrame(data_rows)
+        df.to_csv(self.output_dir / 'word_freq_by_pos.csv', index=False)
+        print(f"✓ Generated word_freq_by_pos.csv ({len(df)} rows)")
+
+    def generate_word_freq_by_ner(self):
+        """Generate word_freq_by_ner.csv: entity_type, word, frequency, rank"""
+        # Collect entity tokens by NER type
+        ner_tokens = defaultdict(list)
+
+        for title, tokens in self.data.items():
+            entities = self.extract_entities_from_bio(tokens)
+
+            for entity_text, entity_type in entities:
+                # Entity text is already concatenated Thai text
+                if entity_text:
+                    ner_tokens[entity_type].append(entity_text)
+
+        # Count frequencies per entity type
+        data_rows = []
+        for entity_type in sorted(ner_tokens.keys()):
+            entity_counts = Counter(ner_tokens[entity_type])
+
+            for rank, (word, frequency) in enumerate(entity_counts.most_common(), 1):
+                data_rows.append({
+                    'entity_type': entity_type,
+                    'word': word,
+                    'frequency': frequency,
+                    'rank': rank
+                })
+
+        df = pd.DataFrame(data_rows)
+        df.to_csv(self.output_dir / 'word_freq_by_ner.csv', index=False)
+        print(f"✓ Generated word_freq_by_ner.csv ({len(df)} rows)")
+
     def convert_all(self):
         """Generate all CSV files."""
         print(f"Converting {len(self.data)} stories from {self.input_path}")
@@ -348,6 +408,8 @@ class TokenPosNerConverter:
         self.generate_word_frequencies()
         self.generate_word_freq_by_cluster()
         self.generate_word_freq_by_emotion()
+        self.generate_word_freq_by_pos()
+        self.generate_word_freq_by_ner()
 
         print("\n✓ All files generated successfully!")
 

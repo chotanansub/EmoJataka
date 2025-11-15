@@ -91,8 +91,8 @@ except Exception as font_err:  # pragma: no cover - defensive fallback
 
 def generate_wordcloud(
     word_freq: Dict[str, int],
-    width: int = 1600,
-    height: int = 1200,
+    width: int = 3200,
+    height: int = 2400,
     max_words: int = 500,
     theme: str = "light",
     title: Optional[str] = None
@@ -193,7 +193,7 @@ def generate_wordcloud(
 
     buf = io.BytesIO()
     plt.tight_layout(pad=0)
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100, facecolor=facecolor)
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=200, facecolor=facecolor)
     plt.close()
     buf.seek(0)
 

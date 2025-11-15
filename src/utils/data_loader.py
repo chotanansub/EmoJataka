@@ -101,6 +101,14 @@ def load_word_freq_by_emotion() -> pd.DataFrame:
     """Load word frequencies by emotion."""
     return load_csv("word_freq_by_emotion.csv")
 
+def load_word_freq_by_pos() -> pd.DataFrame:
+    """Load word frequencies by POS tag."""
+    return load_csv("word_freq_by_pos.csv")
+
+def load_word_freq_by_ner() -> pd.DataFrame:
+    """Load word frequencies by NER entity type."""
+    return load_csv("word_freq_by_ner.csv")
+
 def load_emotion_words_found() -> pd.DataFrame:
     """Load emotion words found in text."""
     return load_csv("emotion_words_found.csv")
