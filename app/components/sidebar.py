@@ -70,7 +70,7 @@ def render_sidebar():
     nav_items = [
         {
             "id": "overview",
-            "icon": "🏠",
+            "icon": "🪷",
             "title": "Overview",
             "description": "Dataset summary & statistics"
         },
