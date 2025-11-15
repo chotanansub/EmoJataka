@@ -372,33 +372,37 @@ with tab2:
         st.warning(f"Could not load POS data: {e}")
     
     st.markdown("---")
-    
-    # Sentence length distribution
-    st.subheader("Sentence Length Distribution")
-    
+
+    # Word count distribution
+    st.subheader("Word Count Distribution")
+
     try:
         from utils.data_loader import load_text_statistics
         text_stats = load_text_statistics()
-        
+
         if not text_stats.empty:
-            if 'avg_sentence_length' in text_stats.columns:
+            if 'total_words' in text_stats.columns:
                 import plotly.express as px
-                
+
                 fig = px.histogram(
                     text_stats,
-                    x='avg_sentence_length',
+                    x='total_words',
                     nbins=30,
-                    title="Distribution of Average Sentence Length",
-                    labels={'avg_sentence_length': 'Average Sentence Length (words)', 'count': 'Number of Chapters'}
+                    title="Distribution of Word Count per Story",
+                    labels={'total_words': 'Total Words', 'count': 'Number of Stories'}
                 )
                 st.plotly_chart(fig, use_container_width=True)
-                
-                st.metric(
-                    "Average Sentence Length",
-                    f"{text_stats['avg_sentence_length'].mean():.1f} words"
-                )
+
+                # Show statistics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Average Words", f"{text_stats['total_words'].mean():.0f}")
+                with col2:
+                    st.metric("Min Words", f"{text_stats['total_words'].min():.0f}")
+                with col3:
+                    st.metric("Max Words", f"{text_stats['total_words'].max():.0f}")
             else:
-                st.info("Sentence length data not available in text statistics.")
+                st.info("Word count data not available in text statistics.")
         else:
             st.warning("Text statistics data not available.")
     except FileNotFoundError:

@@ -12,32 +12,27 @@ from config import NUM_STORIES, OUTPUT_DIR
 def generate_text_statistics():
     """Generate text_statistics.csv with text statistics per chapter."""
     print(f"Generating text_statistics.csv for {NUM_STORIES} chapters...")
-    
+
     data = []
     for chapter in range(1, NUM_STORIES + 1):
         total_words = random.randint(200, 800)
-        total_sentences = random.randint(15, 40)
-        avg_sentence_length = round(total_words / total_sentences, 2) if total_sentences > 0 else 0
-        avg_word_length = round(random.uniform(3.0, 6.0), 2)
-        
+        unique_words = random.randint(50, min(200, total_words))
+
         data.append({
             'chapter': chapter,
             'total_words': total_words,
-            'total_sentences': total_sentences,
-            'avg_sentence_length': avg_sentence_length,
-            'avg_word_length': avg_word_length,
-            'unique_words': random.randint(50, 200)
+            'unique_words': unique_words
         })
-    
+
     df = pd.DataFrame(data)
-    
+
     output_path = Path(OUTPUT_DIR)
     output_path.mkdir(parents=True, exist_ok=True)
-    
+
     filepath = output_path / "text_statistics.csv"
     df.to_csv(filepath, index=False, encoding='utf-8')
     print(f"✓ Saved {filepath}")
-    
+
     return df
 
 def generate_chapter_similarity():

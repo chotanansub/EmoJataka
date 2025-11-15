@@ -18,8 +18,8 @@ EMOTIONS = [
     "sadness"
 ]
 
-# Output directory for mockup data
-OUTPUT_DIR = "data/mockup"
+# Output directory for mockup data (relative to project root)
+OUTPUT_DIR = "../../data/mockup"
 
 # Thai sample words for generating text (simplified)
 THAI_SAMPLE_WORDS = [
