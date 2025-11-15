@@ -16,9 +16,17 @@ from utils.data_loader import (
     load_ner_entities, load_ner_by_chapter, load_ner_counts,
     load_cluster_assignments
 )
-from visualization.wordcloud_gen import wordcloud_from_dataframe, wordcloud_from_dict
 from visualization.charts import create_pos_distribution_chart, create_ner_distribution_chart
 import pandas as pd
+import base64
+from io import BytesIO
+from PIL import Image as PILImage
+
+try:
+    from streamlit_image_zoom import image_zoom
+    HAS_IMAGE_ZOOM = True
+except ImportError:
+    HAS_IMAGE_ZOOM = False
 
 st.set_page_config(
     page_title="Text Insights - Jataka Emotion Analysis",
@@ -29,16 +37,50 @@ st.set_page_config(
 st.title("📊 Text Insights")
 st.markdown("---")
 
+# Helper function to display word cloud with zoom
+def display_wordcloud_image(img_base64: str):
+    """Display word cloud image with zoom capability if available."""
+    if HAS_IMAGE_ZOOM:
+        # Convert base64 to PIL Image for streamlit_image_zoom
+        img_data = base64.b64decode(img_base64)
+        img = PILImage.open(BytesIO(img_data))
+
+        # Calculate display size maintaining aspect ratio
+        # Original is 1600x1200 (4:3 ratio)
+        original_width, original_height = img.size
+        aspect_ratio = original_width / original_height
+
+        # Target height of 600, calculate width to maintain aspect ratio
+        display_height = 600
+        display_width = int(display_height * aspect_ratio)
+
+        # Display with zoom capability maintaining aspect ratio
+        image_zoom(img, mode="scroll", size=(display_width, display_height), keep_aspect_ratio=True, zoom_factor=4.0, increment=0.2)
+    else:
+        # Fallback to standard streamlit image display
+        st.image(f"data:image/png;base64,{img_base64}", use_container_width=True)
+        st.info("💡 Install `streamlit-image-zoom` for interactive zoom: `pip install streamlit-image-zoom`")
+
 # Create tabs
 tab1, tab2, tab3 = st.tabs(["☁️ Word Clouds", "📝 Language Patterns", "🏷️ Named Entities"])
 
 # Tab 1: Word Clouds
 with tab1:
     st.header("☁️ Word Clouds")
-    
+
+    # Theme configuration
+    col_config1, col_config2 = st.columns([3, 1])
+    with col_config2:
+        theme_option = st.selectbox(
+            "🎨 Theme",
+            options=["dark", "light"],
+            format_func=lambda x: "☀️ Light" if x == "light" else "🌙 Dark",
+            key="wordcloud_theme"
+        )
+
     try:
         word_freq = load_word_frequencies()
-        
+
         if not word_freq.empty:
             # Overall word cloud
             st.subheader("Overall Word Cloud")
@@ -51,10 +93,11 @@ with tab1:
                 # Limit to top words
                 top_words = word_freq.nlargest(100, freq_col)
                 word_dict = dict(zip(top_words[word_col], top_words[freq_col]))
-                
-                # Generate word cloud
-                img_base64 = wordcloud_from_dict(word_dict)
-                st.image(f"data:image/png;base64,{img_base64}", use_container_width=True)
+
+                # Generate word cloud with theme
+                from visualization.wordcloud_gen import generate_wordcloud
+                img_base64 = generate_wordcloud(word_dict, theme=theme_option, title="Overall Word Cloud")
+                display_wordcloud_image(img_base64)
             else:
                 st.warning("Word frequency data format not recognized.")
         else:
@@ -89,9 +132,10 @@ with tab1:
                     if word_col in cluster_words.columns and freq_col in cluster_words.columns:
                         top_words = cluster_words.nlargest(100, freq_col)
                         word_dict = dict(zip(top_words[word_col], top_words[freq_col]))
-                        
-                        img_base64 = wordcloud_from_dict(word_dict)
-                        st.image(f"data:image/png;base64,{img_base64}", use_container_width=True)
+
+                        from visualization.wordcloud_gen import generate_wordcloud
+                        img_base64 = generate_wordcloud(word_dict, theme=theme_option, title=f"Cluster {selected_cluster}")
+                        display_wordcloud_image(img_base64)
                     else:
                         st.warning("Word frequency data format not recognized.")
                 else:
@@ -134,9 +178,10 @@ with tab1:
                         if word_col in emotion_words.columns and freq_col in emotion_words.columns:
                             top_words = emotion_words.nlargest(100, freq_col)
                             word_dict = dict(zip(top_words[word_col], top_words[freq_col]))
-                            
-                            img_base64 = wordcloud_from_dict(word_dict)
-                            st.image(f"data:image/png;base64,{img_base64}", use_container_width=True)
+
+                            from visualization.wordcloud_gen import generate_wordcloud
+                            img_base64 = generate_wordcloud(word_dict, theme=theme_option, title=f"{selected_emotion.title()} Emotion")
+                            display_wordcloud_image(img_base64)
                         else:
                             st.warning("Word frequency data format not recognized.")
                     else:

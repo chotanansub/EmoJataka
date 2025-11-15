@@ -3,12 +3,15 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
+from matplotlib.colors import LinearSegmentedColormap
 from wordcloud import WordCloud
 from typing import Dict, Optional
 from pathlib import Path
 import io
 import base64
 import logging
+import numpy as np
+from PIL import Image
 
 LOGGER = logging.getLogger(__name__)
 
@@ -88,27 +91,29 @@ except Exception as font_err:  # pragma: no cover - defensive fallback
 
 def generate_wordcloud(
     word_freq: Dict[str, int],
-    width: int = 800,
-    height: int = 400,
-    max_words: int = 100,
-    background_color: str = "white"
+    width: int = 1600,
+    height: int = 1200,
+    max_words: int = 500,
+    theme: str = "light",
+    title: Optional[str] = None
 ) -> str:
     """
-    Generate a word cloud image and return as base64 encoded string.
-    
+    Generate a word cloud image with Buddha mask and custom colors.
+
     Args:
         word_freq: Dictionary mapping words to frequencies
         width: Image width
         height: Image height
         max_words: Maximum number of words to display
-        background_color: Background color
-    
+        theme: Theme style - "light" for white background or "dark" for dark background
+        title: Optional title text to display in top-right corner
+
     Returns:
         Base64 encoded image string
     """
     if not word_freq:
         # Return empty image
-        fig, ax = plt.subplots(figsize=(width/100, height/100))
+        _, ax = plt.subplots(figsize=(width/100, height/100))
         text_kwargs = {"ha": "center", "va": "center"}
         if FONT_PROPERTIES:
             text_kwargs["fontproperties"] = FONT_PROPERTIES
@@ -119,29 +124,79 @@ def generate_wordcloud(
         plt.close()
         buf.seek(0)
         return base64.b64encode(buf.read()).decode()
-    
+
+    # Get project root and paths
+    project_root = Path(__file__).parent.parent.parent
+    font_path = project_root / "app" / "assets" / "fonts" / "Sarabun-Thin.ttf"
+    mask_path = project_root / "app" / "assets" / "img" / "buddha-mask.png"
+
+    # Use Sarabun-Thin font if available, otherwise fallback
+    font_path_str = str(font_path) if font_path.exists() else FONT_PATH_STRING
+
+    # Load Buddha mask if available
+    mask_image = None
+    if mask_path.exists():
+        try:
+            mask_image = np.array(Image.open(mask_path).convert("L"))
+            mask_image = 255 - mask_image  # Invert colors
+        except Exception as e:
+            LOGGER.warning(f"Could not load Buddha mask: {e}")
+
+    # Create custom colormap with Buddha-inspired golden/red colors
+    colors = ['#FFD700', '#FFA500', '#FF8C00', '#FF6347', '#DC143C', '#B8860B']
+    cmap = LinearSegmentedColormap.from_list('buddha', colors, N=256)
+
+    # Theme settings
+    if theme == "dark":
+        background_color = "#1a0f0a"  # Deep warm dark background
+        facecolor = "#1a0f0a"
+        text_color = "white"
+        bbox_props = dict(boxstyle='round', facecolor='#1a0f0a', alpha=0.8, edgecolor='#FFD700')
+    else:  # light theme
+        background_color = "white"
+        facecolor = "white"
+        text_color = "black"
+        bbox_props = dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='gray')
+
     # Create word cloud
     wordcloud = WordCloud(
+        font_path=font_path_str,
         width=width,
         height=height,
-        max_words=max_words,
         background_color=background_color,
-        colormap='viridis',
-        font_path=FONT_PATH_STRING,
+        max_words=max_words,
+        colormap=cmap,
+        collocations=False,
+        margin=10,
+        normalize_plurals=False,
+        include_numbers=False,
+        mask=mask_image,
         regexp=r"[\u0E00-\u0E7F]+",
-        collocations=False
     ).generate_from_frequencies(word_freq)
-    
-    # Convert to image
-    fig, ax = plt.subplots(figsize=(width/100, height/100))
-    ax.imshow(wordcloud, interpolation='bilinear')
-    ax.axis('off')
-    
+
+    # Convert to image with theme-appropriate background
+    plt.figure(figsize=(12, 8), facecolor=facecolor)
+    ax = plt.gca()
+    ax.set_facecolor(facecolor)
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+
+    # Add title text in top-right corner if provided
+    if title:
+        plt.text(0.98, 0.98, title,
+                 transform=ax.transAxes,
+                 fontsize=10,
+                 verticalalignment='top',
+                 horizontalalignment='right',
+                 color=text_color,
+                 bbox=bbox_props)
+
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.tight_layout(pad=0)
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100, facecolor=facecolor)
     plt.close()
     buf.seek(0)
-    
+
     return base64.b64encode(buf.read()).decode()
 
 def wordcloud_from_dict(word_freq: Dict[str, int]) -> str:
