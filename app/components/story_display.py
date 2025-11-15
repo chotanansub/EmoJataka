@@ -31,17 +31,12 @@ def display_story_info(
     if title_col and title_col in story_dict:
         st.markdown(f"**Title:** {story_dict[title_col]}")
     
-    # Display text preview
+    # Display full text
     if text_col and text_col in story_dict:
-        with st.expander("📖 Story Text Preview", expanded=False):
+        with st.expander("📖 Story Text", expanded=False):
             text = str(story_dict[text_col])
-            # Limit preview length
-            preview_length = 500
-            if len(text) > preview_length:
-                st.text(text[:preview_length] + "...")
-                st.caption(f"Showing first {preview_length} characters of {len(text)} total")
-            else:
-                st.text(text)
+            st.text(text)
+            st.caption(f"Total: {len(text)} characters")
 
 def display_emotion_words(
     emotion_words_df: pd.DataFrame,

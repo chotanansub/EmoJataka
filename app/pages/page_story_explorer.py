@@ -48,42 +48,20 @@ try:
         else:
             chapters = list(range(1, len(stories) + 1))
         
-        # Search and select
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            search_query = st.text_input(
-                "🔍 Search by chapter number or keyword",
-                placeholder="Enter chapter number or keyword..."
-            )
-        
-        with col2:
-            # Filter chapters based on search
-            if search_query:
-                try:
-                    # Try to match chapter number
-                    query_num = int(search_query)
-                    filtered_chapters = [ch for ch in chapters if ch == query_num]
-                except ValueError:
-                    # Search in story titles/text
-                    if 'title' in stories.columns:
-                        filtered_chapters = stories[
-                            stories['title'].str.contains(search_query, case=False, na=False)
-                        ]['chapter'].tolist()
-                    elif 'text' in stories.columns:
-                        filtered_chapters = stories[
-                            stories['text'].str.contains(search_query, case=False, na=False)
-                        ]['chapter'].tolist()
-                    else:
-                        filtered_chapters = chapters
-            else:
-                filtered_chapters = chapters
-            
-            selected_chapter = st.selectbox(
-                "Select Chapter",
-                filtered_chapters if filtered_chapters else chapters,
-                format_func=lambda x: f"Chapter {x}"
-            )
+        # Create format function to show chapter with title
+        def format_chapter(chapter_num):
+            if 'title' in stories.columns:
+                story = stories[stories['chapter'] == chapter_num]
+                if not story.empty:
+                    title = story.iloc[0]['title']
+                    return f"Chapter {chapter_num} : {title}"
+            return f"Chapter {chapter_num}"
+
+        selected_chapter = st.selectbox(
+            "🔍 Select Chapter",
+            chapters,
+            format_func=format_chapter
+        )
         
         st.markdown("---")
         

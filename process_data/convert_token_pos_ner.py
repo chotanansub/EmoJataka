@@ -5,15 +5,19 @@ This script processes the token_pos_ner.json file which contains:
 - Key: Story title (string)
 - Value: List of [token, POS_tag, NER_tag]
 
-Outputs 5 CSV files to data/ directory:
+Outputs 8 CSV files to data/ directory:
 1. ner_entities.csv - Individual named entities with counts
 2. ner_by_chapter.csv - Entity type counts per chapter
 3. ner_counts.csv - Overall entity type statistics
 4. pos_distribution.csv - Overall POS tag distribution
 5. pos_by_chapter.csv - POS tag distribution per chapter
+6. word_frequencies.csv - Overall word frequencies
+7. word_freq_by_cluster.csv - Word frequencies per cluster
+8. word_freq_by_emotion.csv - Word frequencies per emotion
 """
 
 import json
+import re
 import pandas as pd
 from pathlib import Path
 from collections import defaultdict, Counter
@@ -205,6 +209,127 @@ class TokenPosNerConverter:
         df.to_csv(self.output_dir / 'pos_by_chapter.csv', index=False)
         print(f"✓ Generated pos_by_chapter.csv ({len(df)} rows)")
 
+    def generate_word_frequencies(self):
+        """Generate word_frequencies.csv: word, frequency, rank"""
+        all_tokens = []
+
+        # Extract all Thai tokens from all stories
+        for title, tokens in self.data.items():
+            for token, pos_tag, ner_tag in tokens:
+                # Keep only Thai characters
+                if re.match(r'^[\u0E00-\u0E7F]+$', token):
+                    all_tokens.append(token)
+
+        # Count token frequencies
+        token_counts = Counter(all_tokens)
+
+        # Create DataFrame with rank
+        data_rows = []
+        for rank, (word, frequency) in enumerate(token_counts.most_common(), 1):
+            data_rows.append({
+                'word': word,
+                'frequency': frequency,
+                'rank': rank
+            })
+
+        df = pd.DataFrame(data_rows)
+        df.to_csv(self.output_dir / 'word_frequencies.csv', index=False)
+        print(f"✓ Generated word_frequencies.csv ({len(df)} unique words)")
+
+    def generate_word_freq_by_cluster(self):
+        """Generate word_freq_by_cluster.csv: cluster, word, frequency, rank"""
+        # Load cluster assignments (using mockup for now)
+        cluster_path = self.output_dir / 'mockup' / 'cluster_assignments.csv'
+
+        if not cluster_path.exists():
+            print(f"⚠ Skipping word_freq_by_cluster.csv - {cluster_path} not found")
+            return
+
+        # Load cluster assignments
+        cluster_df = pd.read_csv(cluster_path)
+        chapter_to_cluster = dict(zip(cluster_df['chapter'], cluster_df['cluster']))
+
+        # Collect tokens by cluster
+        cluster_tokens = defaultdict(list)
+
+        for title, tokens in self.data.items():
+            chapter = self.title_to_chapter[title]
+            cluster = chapter_to_cluster.get(chapter)
+
+            if cluster is not None:
+                for token, pos_tag, ner_tag in tokens:
+                    # Keep only Thai characters
+                    if re.match(r'^[\u0E00-\u0E7F]+$', token):
+                        cluster_tokens[cluster].append(token)
+
+        # Count frequencies per cluster
+        data_rows = []
+        for cluster in sorted(cluster_tokens.keys()):
+            token_counts = Counter(cluster_tokens[cluster])
+
+            for rank, (word, frequency) in enumerate(token_counts.most_common(), 1):
+                data_rows.append({
+                    'cluster': cluster,
+                    'word': word,
+                    'frequency': frequency,
+                    'rank': rank
+                })
+
+        df = pd.DataFrame(data_rows)
+        df.to_csv(self.output_dir / 'word_freq_by_cluster.csv', index=False)
+        print(f"✓ Generated word_freq_by_cluster.csv ({len(df)} rows)")
+
+    def generate_word_freq_by_emotion(self):
+        """Generate word_freq_by_emotion.csv: emotion, word, frequency, rank"""
+        # Load emotion scores (using mockup for now)
+        emotion_path = self.output_dir / 'mockup' / 'emotion_scores.csv'
+
+        if not emotion_path.exists():
+            print(f"⚠ Skipping word_freq_by_emotion.csv - {emotion_path} not found")
+            return
+
+        # Load emotion scores and find dominant emotion per chapter
+        emotion_df = pd.read_csv(emotion_path)
+
+        # Get dominant emotion for each chapter
+        chapter_to_emotion = {}
+        for chapter in emotion_df['chapter'].unique():
+            chapter_data = emotion_df[emotion_df['chapter'] == chapter]
+            # Find emotion with highest score
+            emotions = ['joy', 'sadness', 'fear', 'anger', 'surprise', 'disgust']
+            max_emotion = max(emotions, key=lambda e: chapter_data[e].values[0] if e in chapter_data.columns else 0)
+            chapter_to_emotion[chapter] = max_emotion
+
+        # Collect tokens by emotion
+        emotion_tokens = defaultdict(list)
+
+        for title, tokens in self.data.items():
+            chapter = self.title_to_chapter[title]
+            emotion = chapter_to_emotion.get(chapter)
+
+            if emotion is not None:
+                for token, pos_tag, ner_tag in tokens:
+                    # Keep only Thai characters
+                    if re.match(r'^[\u0E00-\u0E7F]+$', token):
+                        emotion_tokens[emotion].append(token)
+
+        # Count frequencies per emotion
+        data_rows = []
+        for emotion in sorted(emotion_tokens.keys()):
+            token_counts = Counter(emotion_tokens[emotion])
+
+            for rank, (word, frequency) in enumerate(token_counts.most_common(), 1):
+                data_rows.append({
+                    'emotion': emotion,
+                    'word': word,
+                    'frequency': frequency,
+                    'rank': rank
+                })
+
+        df = pd.DataFrame(data_rows)
+        df.to_csv(self.output_dir / 'word_freq_by_emotion.csv', index=False)
+        print(f"✓ Generated word_freq_by_emotion.csv ({len(df)} rows)")
+
     def convert_all(self):
         """Generate all CSV files."""
         print(f"Converting {len(self.data)} stories from {self.input_path}")
@@ -218,6 +343,11 @@ class TokenPosNerConverter:
         print("\nGenerating POS files...")
         self.generate_pos_distribution()
         self.generate_pos_by_chapter()
+
+        print("\nGenerating word frequency files...")
+        self.generate_word_frequencies()
+        self.generate_word_freq_by_cluster()
+        self.generate_word_freq_by_emotion()
 
         print("\n✓ All files generated successfully!")
 
