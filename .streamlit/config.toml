@@ -1,0 +1,12 @@
+[theme]
+# Force light theme for both local and cloud deployment
+base = "light"
+primaryColor = "#FF6B35"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#FFF3E0"
+textColor = "#1F1F1F"
+font = "sans serif"
+
+[server]
+# Enable file watcher for development
+fileWatcherType = "auto"

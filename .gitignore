@@ -33,9 +33,6 @@ ENV/
 *.swo
 *~
 
-# Streamlit
-.streamlit/
-
 # Data files (keep structure, ignore actual data)
 data/*.csv
 !data/mockup/
