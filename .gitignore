@@ -33,9 +33,10 @@ ENV/
 *.swo
 *~
 
-# Data files (keep structure, ignore actual data)
-data/*.csv
-!data/mockup/
+# Data files (include real data, keep mockup as fallback)
+# Real data files are now included in git for deployment
+!data/*.csv
+data/mockup/
 !data/.gitkeep
 
 # Environment variables
