@@ -36,6 +36,15 @@ st.set_page_config(
 )
 
 st.title("📊 Text Insights")
+
+# Global theme selector for all plots on this page
+plot_theme = st.selectbox(
+    "🎨 Plot Theme (applies to all charts on this page)",
+    options=["light", "dark"],
+    format_func=lambda x: "☀️ Light" if x == "light" else "🌙 Dark",
+    key="text_insights_global_theme"
+)
+
 st.markdown("---")
 
 # Helper functions
@@ -309,7 +318,7 @@ with tab2:
         pos_dist = load_pos_distribution()
         
         if not pos_dist.empty:
-            fig = create_pos_distribution_chart(pos_dist, "POS Tag Distribution")
+            fig = create_pos_distribution_chart(pos_dist, "POS Tag Distribution", theme=plot_theme)
             st.plotly_chart(fig, use_container_width=True)
             
             # Show top POS tags
@@ -494,7 +503,7 @@ with tab3:
         ner_counts = load_ner_counts()
         
         if not ner_counts.empty:
-            fig = create_ner_distribution_chart(ner_counts, "NER Entity Distribution")
+            fig = create_ner_distribution_chart(ner_counts, "NER Entity Distribution", theme=plot_theme)
             st.plotly_chart(fig, use_container_width=True)
             
             # Show table

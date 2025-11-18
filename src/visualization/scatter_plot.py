@@ -12,11 +12,12 @@ def create_cluster_scatter_plot(
     cluster_col: str = 'cluster',
     chapter_col: Optional[str] = None,
     title: str = "Story Clusters (2D Projection)",
-    height: int = 600
+    height: int = 600,
+    theme: str = "light"
 ) -> go.Figure:
     """
     Create an interactive scatter plot for cluster visualization.
-    
+
     Args:
         df: DataFrame with x, y coordinates and cluster assignments
         x_col: Column name for x coordinates
@@ -25,10 +26,22 @@ def create_cluster_scatter_plot(
         chapter_col: Column name for chapter names/IDs (for hover)
         title: Plot title
         height: Plot height in pixels
-    
+        theme: Theme for the plot ("light" or "dark")
+
     Returns:
         Plotly figure object
     """
+    # Theme-specific colors
+    if theme == "dark":
+        paper_bg = '#0e0e0e'
+        plot_bg = '#0e0e0e'
+        text_color = '#FFFFFF'
+        grid_color = '#4a4a4a'
+    else:
+        paper_bg = '#FFFFFF'
+        plot_bg = '#FFFFFF'
+        text_color = '#1F1F1F'
+        grid_color = '#E5E5E5'
     if x_col not in df.columns or y_col not in df.columns:
         # Return empty figure if required columns missing
         fig = go.Figure()
@@ -80,8 +93,14 @@ def create_cluster_scatter_plot(
     fig.update_layout(
         height=height,
         xaxis_title="Dimension 1",
-        yaxis_title="Dimension 2"
+        yaxis_title="Dimension 2",
+        paper_bgcolor=paper_bg,
+        plot_bgcolor=plot_bg,
+        font=dict(color=text_color),
+        xaxis=dict(gridcolor=grid_color, color=text_color),
+        yaxis=dict(gridcolor=grid_color, color=text_color),
+        title=dict(font=dict(color=text_color))
     )
-    
+
     return fig
 

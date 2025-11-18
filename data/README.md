@@ -12,6 +12,7 @@ The app uses **adaptive mode** by default:
 
 ✅ Available:
 - `jataka_stories.csv` - Main Jataka stories dataset
+- `chapter_emotions.csv` - Emotion prediction scores per chapter (real emotion data)
 - `text_statistics.csv` - Text statistics per chapter
 - `pos_distribution.csv` - Part-of-speech distribution
 - `pos_by_chapter.csv` - POS tags by chapter
@@ -25,7 +26,6 @@ The app uses **adaptive mode** by default:
 - `word_freq_by_ner.csv` - Word frequencies by NER type
 
 ⚠️ Missing (falls back to mockup):
-- `emotion_scores.csv` - Emotion scores per chapter
 - `cluster_assignments.csv` - Cluster assignments
 - `cluster_emotions.csv` - Emotion statistics by cluster
 - `overall_emotions.csv` - Overall emotion statistics

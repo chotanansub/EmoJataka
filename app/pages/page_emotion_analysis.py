@@ -14,6 +14,7 @@ from utils.data_loader import (
     load_overall_emotions, load_cluster_emotions, load_emotion_scores,
     load_cluster_assignments, load_stories
 )
+from utils.emotion_scaling import get_scaling_description
 from visualization.star_plot import create_star_plot, create_star_plot_from_df
 from visualization.charts import create_emotion_bar_chart, create_emotion_bar_chart_from_df
 
@@ -24,6 +25,35 @@ st.set_page_config(
 )
 
 st.title("🌟 Emotion Analysis")
+
+# Global controls for all plots on this page
+col_theme, col_scaling = st.columns(2)
+
+with col_theme:
+    plot_theme = st.selectbox(
+        "🎨 Plot Theme",
+        options=["light", "dark"],
+        format_func=lambda x: "☀️ Light" if x == "light" else "🌙 Dark",
+        key="emotion_analysis_global_theme"
+    )
+
+with col_scaling:
+    scaling_method = st.selectbox(
+        "📊 Score Display",
+        options=["minmax", "baseline", "raw"],
+        format_func=lambda x: {
+            "minmax": "Highlight Differences (Min-Max)",
+            "baseline": "Above/Below Baseline",
+            "raw": "Raw Scores"
+        }[x],
+        index=0,  # Default to minmax
+        key="emotion_analysis_scaling"
+    )
+
+# Show scaling method description
+with st.expander("ℹ️ About Score Display Methods"):
+    st.markdown(get_scaling_description(scaling_method))
+
 st.markdown("---")
 
 # Create tabs
@@ -44,20 +74,22 @@ with tab1:
             
             if emotion_cols:
                 # Get first row's emotion scores
-                emotion_data = {col: overall_emotions[col].iloc[0] 
+                emotion_data = {col: overall_emotions[col].iloc[0]
                               for col in emotion_cols if col in overall_emotions.columns}
-                
-                # Star plot
+
+                # Charts
                 col1, col2 = st.columns(2)
-                
+
                 with col1:
                     st.subheader("Star Plot")
-                    fig_star = create_star_plot(emotion_data, "Overall Emotion Profile")
+                    fig_star = create_star_plot(emotion_data, "Overall Emotion Profile",
+                                               theme=plot_theme, scaling=scaling_method)
                     st.plotly_chart(fig_star, use_container_width=True)
-                
+
                 with col2:
                     st.subheader("Bar Chart")
-                    fig_bar = create_emotion_bar_chart(emotion_data, "Emotion Distribution")
+                    fig_bar = create_emotion_bar_chart(emotion_data, "Emotion Distribution",
+                                                       theme=plot_theme, scaling=scaling_method)
                     st.plotly_chart(fig_bar, use_container_width=True)
                 
                 # Key insights
@@ -112,34 +144,38 @@ with tab2:
                                                     'fear', 'disgust', 'surprise', 'sadness']]
                     
                     if emotion_cols:
-                        cluster_emotion_data = {col: cluster_data[col].iloc[0] 
+                        cluster_emotion_data = {col: cluster_data[col].iloc[0]
                                               for col in emotion_cols if col in cluster_data.columns}
-                        
+
                         # Get overall emotions for comparison
                         try:
                             overall_emotions = load_overall_emotions()
-                            overall_emotion_data = {col: overall_emotions[col].iloc[0] 
+                            overall_emotion_data = {col: overall_emotions[col].iloc[0]
                                                   for col in emotion_cols if col in overall_emotions.columns}
                         except:
                             overall_emotion_data = None
-                        
+
                         # Star plots side by side
                         col1, col2 = st.columns(2)
-                        
+
                         with col1:
                             st.subheader(f"Cluster {selected_cluster} Emotion Profile")
                             fig_cluster = create_star_plot(
-                                cluster_emotion_data, 
-                                f"Cluster {selected_cluster} Emotions"
+                                cluster_emotion_data,
+                                f"Cluster {selected_cluster} Emotions",
+                                theme=plot_theme,
+                                scaling=scaling_method
                             )
                             st.plotly_chart(fig_cluster, use_container_width=True)
-                        
+
                         with col2:
                             if overall_emotion_data:
                                 st.subheader("Overall Emotion Profile (Comparison)")
                                 fig_overall = create_star_plot(
                                     overall_emotion_data,
-                                    "Overall Emotions"
+                                    "Overall Emotions",
+                                    theme=plot_theme,
+                                    scaling=scaling_method
                                 )
                                 st.plotly_chart(fig_overall, use_container_width=True)
                         
@@ -218,32 +254,36 @@ with tab3:
                                                 'fear', 'disgust', 'surprise', 'sadness']]
                 
                 if emotion_cols:
-                    chapter_emotion_data = {col: chapter_data[col].iloc[0] 
+                    chapter_emotion_data = {col: chapter_data[col].iloc[0]
                                           for col in emotion_cols if col in chapter_data.columns}
-                    
+
                     # Get overall emotions for comparison
                     overall_emotion_data = None
                     if not overall_emotions.empty:
-                        overall_emotion_data = {col: overall_emotions[col].iloc[0] 
+                        overall_emotion_data = {col: overall_emotions[col].iloc[0]
                                               for col in emotion_cols if col in overall_emotions.columns}
-                    
+
                     # Star plots side by side
                     col1, col2 = st.columns(2)
-                    
+
                     with col1:
                         st.subheader(f"Chapter {selected_chapter} Emotion Profile")
                         fig_chapter = create_star_plot(
                             chapter_emotion_data,
-                            f"Chapter {selected_chapter} Emotions"
+                            f"Chapter {selected_chapter} Emotions",
+                            theme=plot_theme,
+                            scaling=scaling_method
                         )
                         st.plotly_chart(fig_chapter, use_container_width=True)
-                    
+
                     with col2:
                         if overall_emotion_data:
                             st.subheader("Overall Average (Comparison)")
                             fig_overall = create_star_plot(
                                 overall_emotion_data,
-                                "Overall Average Emotions"
+                                "Overall Average Emotions",
+                                theme=plot_theme,
+                                scaling=scaling_method
                             )
                             st.plotly_chart(fig_overall, use_container_width=True)
                     

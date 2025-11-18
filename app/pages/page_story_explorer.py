@@ -14,6 +14,7 @@ from utils.data_loader import (
     load_stories, load_emotion_scores, load_cluster_assignments,
     load_emotion_words_found, load_chapter_similarity
 )
+from utils.emotion_scaling import get_scaling_description
 from visualization.star_plot import create_star_plot
 
 # Import components from app directory
@@ -31,6 +32,35 @@ st.set_page_config(
 )
 
 st.title("📖 Story Explorer")
+
+# Global controls for all plots on this page
+col_theme, col_scaling = st.columns(2)
+
+with col_theme:
+    plot_theme = st.selectbox(
+        "🎨 Plot Theme",
+        options=["light", "dark"],
+        format_func=lambda x: "☀️ Light" if x == "light" else "🌙 Dark",
+        key="story_explorer_global_theme"
+    )
+
+with col_scaling:
+    scaling_method = st.selectbox(
+        "📊 Score Display",
+        options=["minmax", "baseline", "raw"],
+        format_func=lambda x: {
+            "minmax": "Highlight Differences (Min-Max)",
+            "baseline": "Above/Below Baseline",
+            "raw": "Raw Scores"
+        }[x],
+        index=0,  # Default to minmax
+        key="story_explorer_scaling"
+    )
+
+# Show scaling method description
+with st.expander("ℹ️ About Score Display Methods"):
+    st.markdown(get_scaling_description(scaling_method))
+
 st.markdown("---")
 
 try:
@@ -88,19 +118,21 @@ try:
                 
                 if not chapter_emotions.empty:
                     st.subheader("🌟 Emotion Profile")
-                    
+
                     # Get emotion columns
-                    emotion_cols = [col for col in chapter_emotions.columns 
-                                  if col.lower() in ['trust', 'joy', 'anger', 'anticipation', 
+                    emotion_cols = [col for col in chapter_emotions.columns
+                                  if col.lower() in ['trust', 'joy', 'anger', 'anticipation',
                                                     'fear', 'disgust', 'surprise', 'sadness']]
-                    
+
                     if emotion_cols:
-                        emotion_data = {col: chapter_emotions[col].iloc[0] 
+                        emotion_data = {col: chapter_emotions[col].iloc[0]
                                       for col in emotion_cols if col in chapter_emotions.columns}
-                        
+
                         fig = create_star_plot(
                             emotion_data,
-                            f"Chapter {selected_chapter} Emotion Profile"
+                            f"Chapter {selected_chapter} Emotion Profile",
+                            theme=plot_theme,
+                            scaling=scaling_method
                         )
                         st.plotly_chart(fig, use_container_width=True)
                     else:

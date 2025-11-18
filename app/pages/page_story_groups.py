@@ -24,6 +24,15 @@ st.set_page_config(
 )
 
 st.title("🎭 Story Groups (Clusters)")
+
+# Global theme selector for all plots on this page
+plot_theme = st.selectbox(
+    "🎨 Plot Theme (applies to all charts on this page)",
+    options=["light", "dark"],
+    format_func=lambda x: "☀️ Light" if x == "light" else "🌙 Dark",
+    key="story_groups_global_theme"
+)
+
 st.markdown("---")
 
 # Explanation
@@ -54,7 +63,7 @@ try:
         col1, col2 = st.columns(2)
         
         with col1:
-            fig_pie = create_cluster_pie_chart(cluster_counts, "Cluster Distribution")
+            fig_pie = create_cluster_pie_chart(cluster_counts, "Cluster Distribution", theme=plot_theme)
             st.plotly_chart(fig_pie, use_container_width=True)
         
         with col2:
@@ -89,7 +98,8 @@ try:
                     y_col=y_col,
                     cluster_col=cluster_col,
                     chapter_col=chapter_col,
-                    title="Story Clusters (2D Projection)"
+                    title="Story Clusters (2D Projection)",
+                    theme=plot_theme
                 )
                 st.plotly_chart(fig_scatter, use_container_width=True)
                 st.caption("Hover over points to see chapter information. Points are colored by cluster.")
@@ -148,7 +158,8 @@ try:
                             if emotion_by_cluster:
                                 fig = create_emotion_bar_chart(
                                     emotion_by_cluster,
-                                    f"{selected_emotion} by Cluster"
+                                    f"{selected_emotion} by Cluster",
+                                    theme=plot_theme
                                 )
                                 st.plotly_chart(fig, use_container_width=True)
             else:

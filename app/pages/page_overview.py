@@ -11,6 +11,7 @@ if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
 from utils.data_loader import get_dataset_stats, load_overall_emotions
+from utils.emotion_scaling import get_scaling_description
 from visualization.charts import create_emotion_bar_chart
 
 # Import components from app directory
@@ -26,6 +27,35 @@ st.set_page_config(
 )
 
 st.title("🪷 Overview")
+
+# Global controls for all plots on this page
+col_theme, col_scaling = st.columns(2)
+
+with col_theme:
+    plot_theme = st.selectbox(
+        "🎨 Plot Theme",
+        options=["light", "dark"],
+        format_func=lambda x: "☀️ Light" if x == "light" else "🌙 Dark",
+        key="overview_global_theme"
+    )
+
+with col_scaling:
+    scaling_method = st.selectbox(
+        "📊 Score Display",
+        options=["minmax", "baseline", "raw"],
+        format_func=lambda x: {
+            "minmax": "Highlight Differences (Min-Max)",
+            "baseline": "Above/Below Baseline",
+            "raw": "Raw Scores"
+        }[x],
+        index=0,  # Default to minmax
+        key="overview_scaling"
+    )
+
+# Show scaling method description
+with st.expander("ℹ️ About Score Display Methods"):
+    st.markdown(get_scaling_description(scaling_method))
+
 st.markdown("---")
 
 # Project description
@@ -90,7 +120,8 @@ try:
             emotion_data = {col: overall_emotions[col].iloc[0] 
                           for col in emotion_cols if col in overall_emotions.columns}
             
-            fig = create_emotion_bar_chart(emotion_data, "Overall Emotion Scores")
+            fig = create_emotion_bar_chart(emotion_data, "Overall Emotion Scores",
+                                          theme=plot_theme, scaling=scaling_method)
             st.plotly_chart(fig, use_container_width=True)
             
             # Key insights

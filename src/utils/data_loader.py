@@ -46,8 +46,36 @@ def load_stories() -> pd.DataFrame:
     return load_csv("jataka_stories.csv")
 
 def load_emotion_scores() -> pd.DataFrame:
-    """Load emotion scores for all chapters."""
-    return load_csv("emotion_scores.csv")
+    """
+    Load emotion scores for all chapters from chapter_emotions.csv.
+
+    Returns:
+        DataFrame with columns: chapter_id, pred_anger, pred_anticipation,
+        pred_disgust, pred_fear, pred_joy, pred_sadness, pred_surprise, pred_trust
+
+    Note: The column names use 'pred_' prefix and the data is indexed by chapter_id.
+    """
+    df = load_csv("chapter_emotions.csv")
+
+    # Rename chapter_id to chapter for consistency with other datasets
+    if 'chapter_id' in df.columns:
+        df = df.rename(columns={'chapter_id': 'chapter'})
+
+    # Rename pred_* columns to match expected emotion names (without pred_ prefix)
+    emotion_mapping = {
+        'pred_anger': 'anger',
+        'pred_anticipation': 'anticipation',
+        'pred_disgust': 'disgust',
+        'pred_fear': 'fear',
+        'pred_joy': 'joy',
+        'pred_sadness': 'sadness',
+        'pred_surprise': 'surprise',
+        'pred_trust': 'trust'
+    }
+
+    df = df.rename(columns=emotion_mapping)
+
+    return df
 
 def load_cluster_assignments() -> pd.DataFrame:
     """Load cluster assignments for chapters."""
