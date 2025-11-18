@@ -15,7 +15,7 @@ from utils.data_loader import (
     load_cluster_assignments, load_stories
 )
 from utils.emotion_scaling import get_scaling_description
-from visualization.star_plot import create_star_plot, create_star_plot_from_df
+from visualization.star_plot import create_star_plot, create_star_plot_from_df, create_comparison_star_plot
 from visualization.charts import create_emotion_bar_chart, create_emotion_bar_chart_from_df
 
 st.set_page_config(
@@ -156,11 +156,20 @@ with tab2:
                         except:
                             overall_emotion_data = None
 
-                        # Star plots side by side
-                        col1, col2 = st.columns(2)
-
-                        with col1:
-                            st.subheader(f"Cluster {selected_cluster} Emotion Profile")
+                        # Single comparison star plot
+                        if overall_emotion_data:
+                            fig_comparison = create_comparison_star_plot(
+                                cluster_emotion_data,
+                                overall_emotion_data,
+                                primary_label=f"Cluster {selected_cluster}",
+                                comparison_label="Overall Average",
+                                title=f"Cluster {selected_cluster} vs Overall Average",
+                                theme=plot_theme,
+                                scaling=scaling_method
+                            )
+                            st.plotly_chart(fig_comparison, use_container_width=True, key=f"tab2_cluster_{selected_cluster}_comparison")
+                        else:
+                            # Fallback to single plot if no comparison data
                             fig_cluster = create_star_plot(
                                 cluster_emotion_data,
                                 f"Cluster {selected_cluster} Emotions",
@@ -168,17 +177,6 @@ with tab2:
                                 scaling=scaling_method
                             )
                             st.plotly_chart(fig_cluster, use_container_width=True, key=f"tab2_cluster_{selected_cluster}_star")
-
-                        with col2:
-                            if overall_emotion_data:
-                                st.subheader("Overall Average (Comparison)")
-                                fig_overall = create_star_plot(
-                                    overall_emotion_data,
-                                    "Overall Average (Mean Across All Chapters)",
-                                    theme=plot_theme,
-                                    scaling=scaling_method
-                                )
-                                st.plotly_chart(fig_overall, use_container_width=True, key=f"tab2_overall_star")
                         
                         # Stories in this cluster
                         if not cluster_assignments.empty:
@@ -261,28 +259,17 @@ with tab3:
                     overall_emotion_data = {col: emotion_scores[col].mean()
                                           for col in emotion_cols if col in emotion_scores.columns}
 
-                    # Star plots side by side
-                    col1, col2 = st.columns(2)
-
-                    with col1:
-                        st.subheader(f"Chapter {selected_chapter} Emotion Profile")
-                        fig_chapter = create_star_plot(
-                            chapter_emotion_data,
-                            f"Chapter {selected_chapter} Emotions",
-                            theme=plot_theme,
-                            scaling=scaling_method
-                        )
-                        st.plotly_chart(fig_chapter, use_container_width=True, key=f"tab3_chapter_{selected_chapter}_star")
-
-                    with col2:
-                        st.subheader("Overall Average (Comparison)")
-                        fig_overall = create_star_plot(
-                            overall_emotion_data,
-                            "Overall Average (Mean Across All Chapters)",
-                            theme=plot_theme,
-                            scaling=scaling_method
-                        )
-                        st.plotly_chart(fig_overall, use_container_width=True, key=f"tab3_overall_star")
+                    # Single comparison star plot
+                    fig_comparison = create_comparison_star_plot(
+                        chapter_emotion_data,
+                        overall_emotion_data,
+                        primary_label=f"Chapter {selected_chapter}",
+                        comparison_label="Overall Average",
+                        title=f"Chapter {selected_chapter} vs Overall Average",
+                        theme=plot_theme,
+                        scaling=scaling_method
+                    )
+                    st.plotly_chart(fig_comparison, use_container_width=True, key=f"tab3_chapter_{selected_chapter}_comparison")
                     
                     # Story text preview
                     story_info = stories[stories['chapter'] == selected_chapter]
