@@ -78,12 +78,52 @@ def load_emotion_scores() -> pd.DataFrame:
     return df
 
 def load_cluster_assignments() -> pd.DataFrame:
-    """Load cluster assignments for chapters."""
-    return load_csv("cluster_assignments.csv")
+    """
+    Load cluster assignments for chapters from wangchan_cluster.csv.
+
+    Returns:
+        DataFrame with columns: title, cluster, x, y
+        Where cluster is the cluster label (0 or 1)
+    """
+    df = load_csv("wangchan_cluster.csv")
+
+    # Rename columns for consistency
+    df = df.rename(columns={
+        'cluster_wangchan': 'cluster',
+        'x_wangchan': 'x',
+        'y_wangchan': 'y'
+    })
+
+    # Add chapter number based on row index (1-indexed)
+    df['chapter'] = range(1, len(df) + 1)
+
+    return df
 
 def load_cluster_emotions() -> pd.DataFrame:
-    """Load emotion statistics by cluster."""
-    return load_csv("cluster_emotions.csv")
+    """
+    Load emotion statistics by cluster.
+
+    Calculates mean emotion scores for each cluster using
+    chapter_emotions and wangchan_cluster data.
+
+    Returns:
+        DataFrame with cluster and emotion columns
+    """
+    # Load cluster assignments and emotion scores
+    cluster_df = load_cluster_assignments()
+    emotion_df = load_emotion_scores()
+
+    # Merge on chapter
+    merged = cluster_df.merge(emotion_df, on='chapter', how='inner')
+
+    # Get emotion columns
+    emotion_cols = ['trust', 'joy', 'anger', 'anticipation',
+                   'fear', 'disgust', 'surprise', 'sadness']
+
+    # Calculate mean emotion scores per cluster
+    cluster_emotions = merged.groupby('cluster')[emotion_cols].mean().reset_index()
+
+    return cluster_emotions
 
 def load_overall_emotions() -> pd.DataFrame:
     """Load overall emotion statistics."""
@@ -146,8 +186,13 @@ def load_chapter_similarity() -> pd.DataFrame:
     return load_csv("chapter_similarity.csv")
 
 def load_cluster_visualization() -> pd.DataFrame:
-    """Load cluster visualization data (2D coordinates)."""
-    return load_csv("cluster_visualization.csv")
+    """
+    Load cluster visualization data (2D coordinates) from wangchan_cluster.csv.
+
+    Returns:
+        DataFrame with columns: chapter, title, cluster, x, y
+    """
+    return load_cluster_assignments()
 
 def get_dataset_stats() -> Dict[str, Any]:
     """Get overall dataset statistics."""
