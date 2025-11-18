@@ -134,7 +134,7 @@ try:
                             theme=plot_theme,
                             scaling=scaling_method
                         )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, use_container_width=True, key=f"explorer_chapter_{selected_chapter}_star")
                     else:
                         st.warning("Emotion data not found for this chapter.")
                 else:

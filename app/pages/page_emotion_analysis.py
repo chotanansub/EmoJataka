@@ -11,7 +11,7 @@ if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
 from utils.data_loader import (
-    load_overall_emotions, load_cluster_emotions, load_emotion_scores,
+    load_cluster_emotions, load_emotion_scores,
     load_cluster_assignments, load_stories
 )
 from utils.emotion_scaling import get_scaling_description
@@ -62,35 +62,36 @@ tab1, tab2, tab3 = st.tabs(["📊 All Stories Combined", "🎭 By Story Group", 
 # Tab 1: All Stories Combined
 with tab1:
     st.header("All Stories Combined")
-    
+
     try:
-        overall_emotions = load_overall_emotions()
-        
-        if not overall_emotions.empty:
+        # Load chapter emotions and calculate mean across all chapters
+        chapter_emotions = load_emotion_scores()
+
+        if not chapter_emotions.empty:
             # Get emotion columns
-            emotion_cols = [col for col in overall_emotions.columns 
-                          if col.lower() in ['trust', 'joy', 'anger', 'anticipation', 
+            emotion_cols = [col for col in chapter_emotions.columns
+                          if col.lower() in ['trust', 'joy', 'anger', 'anticipation',
                                             'fear', 'disgust', 'surprise', 'sadness']]
-            
+
             if emotion_cols:
-                # Get first row's emotion scores
-                emotion_data = {col: overall_emotions[col].iloc[0]
-                              for col in emotion_cols if col in overall_emotions.columns}
+                # Calculate mean emotion scores across all chapters
+                emotion_data = {col: chapter_emotions[col].mean()
+                              for col in emotion_cols if col in chapter_emotions.columns}
 
                 # Charts
                 col1, col2 = st.columns(2)
 
                 with col1:
                     st.subheader("Star Plot")
-                    fig_star = create_star_plot(emotion_data, "Overall Emotion Profile",
+                    fig_star = create_star_plot(emotion_data, "Overall Emotion Profile (Mean Across All Chapters)",
                                                theme=plot_theme, scaling=scaling_method)
-                    st.plotly_chart(fig_star, use_container_width=True)
+                    st.plotly_chart(fig_star, use_container_width=True, key="tab1_star_plot")
 
                 with col2:
                     st.subheader("Bar Chart")
-                    fig_bar = create_emotion_bar_chart(emotion_data, "Emotion Distribution",
+                    fig_bar = create_emotion_bar_chart(emotion_data, "Emotion Distribution (Mean Across All Chapters)",
                                                        theme=plot_theme, scaling=scaling_method)
-                    st.plotly_chart(fig_bar, use_container_width=True)
+                    st.plotly_chart(fig_bar, use_container_width=True, key="tab1_bar_chart")
                 
                 # Key insights
                 max_emotion = max(emotion_data.items(), key=lambda x: x[1])
@@ -147,11 +148,11 @@ with tab2:
                         cluster_emotion_data = {col: cluster_data[col].iloc[0]
                                               for col in emotion_cols if col in cluster_data.columns}
 
-                        # Get overall emotions for comparison
+                        # Get overall emotions for comparison (mean across all chapters)
                         try:
-                            overall_emotions = load_overall_emotions()
-                            overall_emotion_data = {col: overall_emotions[col].iloc[0]
-                                                  for col in emotion_cols if col in overall_emotions.columns}
+                            all_chapters = load_emotion_scores()
+                            overall_emotion_data = {col: all_chapters[col].mean()
+                                                  for col in emotion_cols if col in all_chapters.columns}
                         except:
                             overall_emotion_data = None
 
@@ -166,18 +167,18 @@ with tab2:
                                 theme=plot_theme,
                                 scaling=scaling_method
                             )
-                            st.plotly_chart(fig_cluster, use_container_width=True)
+                            st.plotly_chart(fig_cluster, use_container_width=True, key=f"tab2_cluster_{selected_cluster}_star")
 
                         with col2:
                             if overall_emotion_data:
-                                st.subheader("Overall Emotion Profile (Comparison)")
+                                st.subheader("Overall Average (Comparison)")
                                 fig_overall = create_star_plot(
                                     overall_emotion_data,
-                                    "Overall Emotions",
+                                    "Overall Average (Mean Across All Chapters)",
                                     theme=plot_theme,
                                     scaling=scaling_method
                                 )
-                                st.plotly_chart(fig_overall, use_container_width=True)
+                                st.plotly_chart(fig_overall, use_container_width=True, key=f"tab2_overall_star")
                         
                         # Stories in this cluster
                         if not cluster_assignments.empty:
@@ -226,7 +227,6 @@ with tab3:
     try:
         emotion_scores = load_emotion_scores()
         stories = load_stories()
-        overall_emotions = load_overall_emotions()
         
         if not emotion_scores.empty and not stories.empty:
             # Get chapter options
@@ -257,11 +257,9 @@ with tab3:
                     chapter_emotion_data = {col: chapter_data[col].iloc[0]
                                           for col in emotion_cols if col in chapter_data.columns}
 
-                    # Get overall emotions for comparison
-                    overall_emotion_data = None
-                    if not overall_emotions.empty:
-                        overall_emotion_data = {col: overall_emotions[col].iloc[0]
-                                              for col in emotion_cols if col in overall_emotions.columns}
+                    # Get overall emotions for comparison (mean across all chapters)
+                    overall_emotion_data = {col: emotion_scores[col].mean()
+                                          for col in emotion_cols if col in emotion_scores.columns}
 
                     # Star plots side by side
                     col1, col2 = st.columns(2)
@@ -274,18 +272,17 @@ with tab3:
                             theme=plot_theme,
                             scaling=scaling_method
                         )
-                        st.plotly_chart(fig_chapter, use_container_width=True)
+                        st.plotly_chart(fig_chapter, use_container_width=True, key=f"tab3_chapter_{selected_chapter}_star")
 
                     with col2:
-                        if overall_emotion_data:
-                            st.subheader("Overall Average (Comparison)")
-                            fig_overall = create_star_plot(
-                                overall_emotion_data,
-                                "Overall Average Emotions",
-                                theme=plot_theme,
-                                scaling=scaling_method
-                            )
-                            st.plotly_chart(fig_overall, use_container_width=True)
+                        st.subheader("Overall Average (Comparison)")
+                        fig_overall = create_star_plot(
+                            overall_emotion_data,
+                            "Overall Average (Mean Across All Chapters)",
+                            theme=plot_theme,
+                            scaling=scaling_method
+                        )
+                        st.plotly_chart(fig_overall, use_container_width=True, key=f"tab3_overall_star")
                     
                     # Story text preview
                     story_info = stories[stories['chapter'] == selected_chapter]

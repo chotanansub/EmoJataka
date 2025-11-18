@@ -10,6 +10,11 @@ from typing import Dict, Tuple
 # Baseline for uniform distribution across 8 emotions
 UNIFORM_BASELINE = 0.125
 
+# Global min/max values observed across all 314 chapters
+# These are used for consistent scaling across the entire dataset
+GLOBAL_EMOTION_MIN = 0.104088  # Minimum score observed (disgust in chapter 64)
+GLOBAL_EMOTION_MAX = 0.177014  # Maximum score observed (trust in chapter 64)
+
 
 def scale_emotion_scores(
     emotion_scores: Dict[str, float],
@@ -38,18 +43,12 @@ def scale_emotion_scores(
         return raw_scores, raw_scores
 
     elif method == 'minmax':
-        # Min-max normalization: scale to 0-1 range within this chapter
-        min_score = min(emotion_scores.values())
-        max_score = max(emotion_scores.values())
-
-        # Handle edge case where all scores are identical
-        if max_score == min_score:
-            scaled = {emotion: 0.5 for emotion in emotion_scores}
-        else:
-            scaled = {
-                emotion: (score - min_score) / (max_score - min_score)
-                for emotion, score in emotion_scores.items()
-            }
+        # Global min-max normalization: scale using global min/max across ALL chapters
+        # This ensures consistent scaling - only the true global extremes get 0.0 or 1.0
+        scaled = {
+            emotion: (score - GLOBAL_EMOTION_MIN) / (GLOBAL_EMOTION_MAX - GLOBAL_EMOTION_MIN)
+            for emotion, score in emotion_scores.items()
+        }
         return scaled, raw_scores
 
     elif method == 'baseline':
@@ -90,9 +89,10 @@ def get_scaling_description(method: str) -> str:
     """
     descriptions = {
         'minmax': (
-            "**Highlight Differences (Min-Max)**: Scales emotions within each chapter "
-            "so the highest emotion = 1.0 and lowest = 0.0. Best for seeing relative "
-            "importance of emotions within a story."
+            "**Highlight Differences (Min-Max)**: Scales emotions using global min/max "
+            "values across all 314 chapters (0.104-0.177). Scores close to 1.0 indicate "
+            "emotions near the dataset maximum, while scores near 0.0 are near the minimum. "
+            "Provides consistent comparison across all stories."
         ),
         'baseline': (
             "**Above/Below Baseline**: Shows how much each emotion deviates from "

@@ -10,7 +10,7 @@ src_path = project_root / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
-from utils.data_loader import get_dataset_stats, load_overall_emotions
+from utils.data_loader import get_dataset_stats, load_emotion_scores
 from utils.emotion_scaling import get_scaling_description
 from visualization.charts import create_emotion_bar_chart
 
@@ -107,23 +107,24 @@ st.markdown("---")
 st.header("🌟 Overall Emotion Distribution")
 
 try:
-    overall_emotions = load_overall_emotions()
-    
-    if not overall_emotions.empty:
+    # Load chapter emotions and calculate mean across all chapters
+    chapter_emotions = load_emotion_scores()
+
+    if not chapter_emotions.empty:
         # Get emotion columns
-        emotion_cols = [col for col in overall_emotions.columns 
-                       if col.lower() in ['trust', 'joy', 'anger', 'anticipation', 
+        emotion_cols = [col for col in chapter_emotions.columns
+                       if col.lower() in ['trust', 'joy', 'anger', 'anticipation',
                                          'fear', 'disgust', 'surprise', 'sadness']]
-        
+
         if emotion_cols:
-            # Get first row's emotion scores
-            emotion_data = {col: overall_emotions[col].iloc[0] 
-                          for col in emotion_cols if col in overall_emotions.columns}
-            
-            fig = create_emotion_bar_chart(emotion_data, "Overall Emotion Scores",
+            # Calculate mean emotion scores across all chapters
+            emotion_data = {col: chapter_emotions[col].mean()
+                          for col in emotion_cols if col in chapter_emotions.columns}
+
+            fig = create_emotion_bar_chart(emotion_data, "Overall Emotion Scores (Mean Across All Chapters)",
                                           theme=plot_theme, scaling=scaling_method)
-            st.plotly_chart(fig, use_container_width=True)
-            
+            st.plotly_chart(fig, use_container_width=True, key="overview_emotion_bar")
+
             # Key insights
             max_emotion = max(emotion_data.items(), key=lambda x: x[1])
             min_emotion = min(emotion_data.items(), key=lambda x: x[1])
