@@ -14,14 +14,14 @@ if str(src_path) not in sys.path:
 from utils.emotion_scaling import scale_emotion_scores, format_score_display
 
 EMOTIONS = [
-    "trust",
     "joy",
+    "trust",
+    "fear",
+     "surprise",
+    "sadness",
+    "disgust",
     "anger",
     "anticipation",
-    "fear",
-    "disgust",
-    "surprise",
-    "sadness"
 ]
 
 def create_star_plot(
@@ -103,7 +103,7 @@ def create_star_plot(
         max_range = max(scores) * 1.1 if max(scores) > 0 else 0.2
     else:
         # For scaled scores, use 0-0.6 range to make differences more visible
-        max_range = 0.75
+        max_range = 0.5
 
     fig.update_layout(
         polar=dict(
